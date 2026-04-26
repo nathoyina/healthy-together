@@ -1,16 +1,12 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import type { GoalType } from "@/lib/types/database";
 import { Button } from "@/components/ui/button";
 import { WeeklyBar } from "@/components/goals/WeeklyBar";
 import { StreakBadge } from "@/components/goals/StreakBadge";
-import {
-  setDailyBinaryDone,
-  setCountForDate,
-  adjustCountForDate,
-} from "@/app/(app)/dashboard/entry-actions";
+import { setDailyBinaryDone, setCountForDate } from "@/app/(app)/dashboard/entry-actions";
 
 export type DashboardGoal = {
   id: string;
@@ -36,6 +32,21 @@ export function CheckInControl({
   streakDays: number;
 }) {
   const [pending, start] = useTransition();
+  const [optimisticDoneToday, setOptimisticDoneToday] = useState(doneToday);
+  const [optimisticTodayCount, setOptimisticTodayCount] = useState(todayCount);
+  const [optimisticWeekTotal, setOptimisticWeekTotal] = useState(weekTotal);
+
+  useEffect(() => {
+    setOptimisticDoneToday(doneToday);
+  }, [doneToday]);
+
+  useEffect(() => {
+    setOptimisticTodayCount(todayCount);
+  }, [todayCount]);
+
+  useEffect(() => {
+    setOptimisticWeekTotal(weekTotal);
+  }, [weekTotal]);
 
   if (goal.type === "daily_binary") {
     return (
@@ -45,20 +56,23 @@ export function CheckInControl({
         </div>
         <Button
           size="lg"
-          variant={doneToday ? "secondary" : "default"}
+          variant={optimisticDoneToday ? "secondary" : "default"}
           disabled={pending}
-          className="min-w-[8rem] shrink-0"
+          className="min-w-[8rem] shrink-0 rounded-full"
           onClick={() =>
             start(async () => {
+              const next = !optimisticDoneToday;
+              setOptimisticDoneToday(next);
               try {
-                await setDailyBinaryDone(goal.id, todayStr, !doneToday);
+                await setDailyBinaryDone(goal.id, todayStr, next);
               } catch (e) {
+                setOptimisticDoneToday(!next);
                 toast.error(e instanceof Error ? e.message : "Could not update");
               }
             })
           }
         >
-          {doneToday ? "Undo" : "Done today"}
+          {optimisticDoneToday ? "Undo" : "Done today"}
         </Button>
       </div>
     );
@@ -73,7 +87,7 @@ export function CheckInControl({
     return (
       <div className="space-y-4">
         {goal.type === "weekly_count" ? (
-          <WeeklyBar current={weekTotal} target={target} label={label} />
+          <WeeklyBar current={optimisticWeekTotal} target={target} label={label} />
         ) : (
           <div className="text-xs text-muted-foreground">
             Target today: <span className="font-medium text-foreground">{target}</span>
@@ -84,13 +98,21 @@ export function CheckInControl({
             type="button"
             variant="outline"
             size="icon"
-            disabled={pending || todayCount <= 0}
+            disabled={pending || optimisticTodayCount <= 0}
             aria-label="Decrease"
             onClick={() =>
               start(async () => {
+                const nextCount = Math.max(0, optimisticTodayCount - 1);
+                const delta = nextCount - optimisticTodayCount;
+                setOptimisticTodayCount(nextCount);
+                if (goal.type === "weekly_count") {
+                  setOptimisticWeekTotal((prev) => Math.max(0, prev + delta));
+                }
                 try {
-                  await adjustCountForDate(goal.id, todayStr, -1);
+                  await setCountForDate(goal.id, todayStr, nextCount);
                 } catch (e) {
+                  setOptimisticTodayCount(todayCount);
+                  setOptimisticWeekTotal(weekTotal);
                   toast.error(e instanceof Error ? e.message : "Could not update");
                 }
               })
@@ -99,7 +121,7 @@ export function CheckInControl({
             −
           </Button>
           <div className="text-center">
-            <p className="text-2xl font-semibold tabular-nums">{todayCount}</p>
+            <p className="text-2xl font-semibold tabular-nums">{optimisticTodayCount}</p>
             <p className="text-xs text-muted-foreground">
               {goal.type === "weekly_count" ? "sessions today" : "logged today"}
             </p>
@@ -112,9 +134,17 @@ export function CheckInControl({
             aria-label="Increase"
             onClick={() =>
               start(async () => {
+                const nextCount = optimisticTodayCount + 1;
+                const delta = nextCount - optimisticTodayCount;
+                setOptimisticTodayCount(nextCount);
+                if (goal.type === "weekly_count") {
+                  setOptimisticWeekTotal((prev) => prev + delta);
+                }
                 try {
-                  await adjustCountForDate(goal.id, todayStr, 1);
+                  await setCountForDate(goal.id, todayStr, nextCount);
                 } catch (e) {
+                  setOptimisticTodayCount(todayCount);
+                  setOptimisticWeekTotal(weekTotal);
                   toast.error(e instanceof Error ? e.message : "Could not update");
                 }
               })
@@ -129,12 +159,19 @@ export function CheckInControl({
             variant="ghost"
             size="sm"
             className="w-full text-muted-foreground"
-            disabled={pending || todayCount <= 0}
+            disabled={pending || optimisticTodayCount <= 0}
             onClick={() =>
               start(async () => {
+                const previous = optimisticTodayCount;
+                setOptimisticTodayCount(0);
+                if (goal.type === "weekly_count") {
+                  setOptimisticWeekTotal((prev) => Math.max(0, prev - previous));
+                }
                 try {
                   await setCountForDate(goal.id, todayStr, 0);
                 } catch (e) {
+                  setOptimisticTodayCount(todayCount);
+                  setOptimisticWeekTotal(weekTotal);
                   toast.error(e instanceof Error ? e.message : "Could not update");
                 }
               })

@@ -21,6 +21,7 @@ export interface Goal {
   icon: string | null;
   color: string | null;
   is_template: boolean;
+  is_public: boolean;
   archived_at: string | null;
   created_at: string;
 }

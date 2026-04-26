@@ -35,6 +35,7 @@ create table public.goals (
   icon text,
   color text,
   is_template boolean not null default false,
+  is_public boolean not null default false,
   archived_at timestamptz,
   created_at timestamptz not null default now(),
   constraint goals_template_owner check (
@@ -140,6 +141,7 @@ as $$
       g.id = p_goal_id
       and (
         g.is_template
+        or g.is_public
         or g.owner_id = auth.uid ()
         or (
           g.owner_id is not null
@@ -293,9 +295,27 @@ as $$
   );
 $$;
 
+create or replace function public.auth_owns_goal (p_goal_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.goals g
+    where
+      g.id = p_goal_id
+      and g.owner_id = auth.uid ()
+  );
+$$;
+
 grant execute on function public.auth_in_group (uuid) to authenticated;
 
 grant execute on function public.auth_is_group_owner_member (uuid) to authenticated;
+
+grant execute on function public.auth_owns_goal (uuid) to authenticated;
 
 -- -----------------------------------------------------------------------------
 -- Row level security
@@ -328,6 +348,7 @@ with check (id = auth.uid ());
 create policy goals_select_visible
 on public.goals for select to authenticated using (
   is_template
+  or is_public
   or owner_id = auth.uid ()
   or (
     owner_id is not null
@@ -374,6 +395,9 @@ with check (
     where
       g.id = goal_id
       and (
+        g.is_template
+        or g.is_public
+        or
         g.owner_id = auth.uid ()
         or (
           g.owner_id is not null
@@ -503,13 +527,7 @@ with check (
       and gm.role = 'owner'
   )
   or (
-    exists (
-      select 1
-      from public.goals g
-      where
-        g.id = goal_id
-        and g.owner_id = auth.uid ()
-    )
+    public.auth_owns_goal (goal_id)
     and exists (
       select 1
       from public.group_members gm
@@ -531,13 +549,7 @@ on public.group_goals for delete to authenticated using (
       and gm.role = 'owner'
   )
   or (
-    exists (
-      select 1
-      from public.goals g
-      where
-        g.id = goal_id
-        and g.owner_id = auth.uid ()
-    )
+    public.auth_owns_goal (goal_id)
     and exists (
       select 1
       from public.group_members gm
@@ -573,7 +585,8 @@ insert into public.goals (
   target_per_period,
   icon,
   color,
-  is_template
+  is_template,
+  is_public
 )
 values
   (
@@ -584,6 +597,7 @@ values
     null,
     'flame',
     'orange',
+    true,
     true
   ),
   (
@@ -594,6 +608,7 @@ values
     3,
     'dumbbell',
     'teal',
+    true,
     true
   ),
   (
@@ -604,6 +619,7 @@ values
     3,
     'footprints',
     'sky',
+    true,
     true
   );
 

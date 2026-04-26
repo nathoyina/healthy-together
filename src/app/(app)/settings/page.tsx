@@ -40,9 +40,17 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("username, display_name")
+    .select("username, display_name, company_id")
     .eq("id", user.id)
     .maybeSingle();
+
+  const { data: company } = profile?.company_id
+    ? await supabase
+        .from("companies")
+        .select("id, name, join_code")
+        .eq("id", profile.company_id)
+        .maybeSingle()
+    : { data: null as { id: string; name: string; join_code: string } | null };
 
   return (
     <div className="space-y-8">
@@ -94,6 +102,58 @@ export default async function SettingsPage() {
               Sign out
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/80 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-lg">Company code</CardTitle>
+          <CardDescription>
+            Everyone in the same company signs up with this code.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {company ? (
+            <>
+              <div className="text-sm">
+                <span className="text-muted-foreground">Company</span>
+                <p className="font-medium">{company.name}</p>
+              </div>
+              <div className="text-sm">
+                <span className="text-muted-foreground">Join code</span>
+                <p className="font-mono font-medium">{company.join_code}</p>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-3 text-sm">
+              <p className="text-sm text-muted-foreground">
+                No company is linked to your account yet. Company creation is manual
+                via Supabase SQL (admin step). Run this once, then share the join code
+                with colleagues.
+              </p>
+              <pre className="overflow-x-auto rounded-md border border-border/80 bg-muted/30 p-3 text-xs leading-5">
+{`with new_company as (
+  insert into public.companies (name, join_code)
+  values ('Acme', 'ACME2026')
+  returning id
+)
+insert into public.goals (
+  owner_id, company_id, title, description, type, target_per_period, icon, color, is_template, is_public
+)
+select null, c.id, x.title, x.description, x.type::public.goal_type, x.target_per_period, x.icon, x.color, true, true
+from new_company c
+cross join (
+  values
+    ('Core & mobility', 'Daily check-in when you finish core, mobility, or planned rehab work.', 'daily_binary', null::int, 'flame', 'orange'),
+    ('Strength sessions', 'Log each strength, Pilates, or studio workout; week resets Monday.', 'weekly_count', 3, 'dumbbell', 'teal'),
+    ('Runs this week', 'Count each run Mon–Sun to build consistent training.', 'weekly_count', 3, 'footprints', 'sky')
+) as x(title, description, type, target_per_period, icon, color);`}
+              </pre>
+              <p className="text-xs text-muted-foreground">
+                Then users can sign up with <code>ACME2026</code>.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

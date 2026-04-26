@@ -18,10 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { ShareGoalForm } from "./share-goal-form";
 import { subDays } from "date-fns";
 
-function uniqueIds(ids: (string | null | undefined)[]): string[] {
-  return [...new Set(ids.filter((x): x is string => !!x))];
-}
-
 export default async function GoalDetailPage({
   params,
 }: {
@@ -94,30 +90,23 @@ export default async function GoalDetailPage({
     .order("entry_date", { ascending: false })
     .limit(42);
 
-  const { data: friendships } = await supabase
-    .from("friendships")
-    .select("requester_id, addressee_id, status")
-    .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
+  const { data: participants } = await supabase
+    .from("goal_participants")
+    .select("user_id")
+    .eq("goal_id", id);
+  const rankUserIds = [...new Set((participants ?? []).map((p) => p.user_id))];
 
-  const acceptedFriendIds: string[] = [];
-  for (const f of friendships ?? []) {
-    if (f.status !== "accepted") continue;
-    const other = f.requester_id === user.id ? f.addressee_id : f.requester_id;
-    acceptedFriendIds.push(other);
-  }
-
-  const rankUserIds = uniqueIds([user.id, goal.owner_id, ...acceptedFriendIds]);
-
-  const { data: leaderboardEntries } = goal.is_template
-    ? { data: [] as { user_id: string; value: number }[] }
-    : await supabase
-        .from("goal_entries")
-        .select("user_id, value")
-        .eq("goal_id", id)
-        .in("user_id", rankUserIds);
+  const { data: leaderboardEntries } =
+    rankUserIds.length > 0
+      ? await supabase
+          .from("goal_entries")
+          .select("user_id, value")
+          .eq("goal_id", id)
+          .in("user_id", rankUserIds)
+      : { data: [] as { user_id: string; value: number }[] };
 
   const { data: leaderboardProfiles } =
-    !goal.is_template && rankUserIds.length > 0
+    rankUserIds.length > 0
       ? await supabase
           .from("profiles")
           .select("id, username, display_name")
@@ -131,15 +120,12 @@ export default async function GoalDetailPage({
     ]),
   );
 
-  const leaderboardRows = goal.is_template
-    ? []
-    : buildFriendLeaderboardRows(
-        user.id,
-        goal.owner_id,
-        acceptedFriendIds,
-        leaderboardEntries ?? [],
-        profileMap,
-      );
+  const leaderboardRows = buildFriendLeaderboardRows(
+    user.id,
+    rankUserIds,
+    leaderboardEntries ?? [],
+    profileMap,
+  );
 
   const { data: memberships } = await supabase
     .from("group_members")
@@ -182,11 +168,10 @@ export default async function GoalDetailPage({
             <p className="mt-2 text-sm text-muted-foreground">{goal.description}</p>
           ) : null}
           <div className="mt-2 flex flex-wrap gap-2">
-            <Badge variant="secondary" className="capitalize">
-              {goal.type.replace(/_/g, " ")}
-            </Badge>
             {goal.archived_at ? <Badge variant="outline">Archived</Badge> : null}
-            {goal.is_template ? <Badge variant="outline">Template</Badge> : null}
+            {!goal.is_template && !goal.is_public ? (
+              <Badge variant="outline">Private goal</Badge>
+            ) : null}
           </div>
         </div>
       </div>
@@ -216,27 +201,11 @@ export default async function GoalDetailPage({
         </Card>
       ) : null}
 
-      {!goal.is_template ? (
-        <FriendCheckinLeaderboard
-          id="friend-leaderboard"
-          rows={leaderboardRows}
-          friendCount={acceptedFriendIds.length}
-        />
-      ) : (
-        <Card className="border-dashed border-border/80">
-          <CardHeader>
-            <CardTitle className="text-lg">Friend leaderboard</CardTitle>
-            <CardDescription>
-              After you add this habit to your list, you and accepted friends can compare
-              total check-ins on the same habit.{" "}
-              <Link href="/goals" className="font-medium text-foreground underline">
-                Browse habits
-              </Link>{" "}
-              to clone it.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      )}
+      <FriendCheckinLeaderboard
+        id="friend-leaderboard"
+        rows={leaderboardRows}
+        participantCount={rankUserIds.length}
+      />
 
       {isOwner && !goal.archived_at ? (
         <Card className="border-border/80 shadow-sm">

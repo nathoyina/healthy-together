@@ -57,12 +57,12 @@ export function OnboardingForm({
             </p>
           </div>
           <CardTitle className="text-2xl font-semibold tracking-tight">
-            Set up your tracker
+            Join company goals
           </CardTitle>
           <CardDescription>
             {hasUsername
-              ? "Turn on a few starter habits. You’ll check in from the dashboard and can add custom goals later."
-              : "Choose a username, then pick starter habits to track. Everything is designed around simple daily and weekly check-ins."}
+              ? "Pick shared goals to join with colleagues. You can join or leave more anytime."
+              : "Choose a username, then pick shared company goals to join with colleagues."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -89,37 +89,27 @@ export function OnboardingForm({
               </div>
             ) : null}
             <div className="space-y-3">
-              <Label>Habits to start tracking</Label>
+              <Label>Company goals to join</Label>
               {templateLoadError ? (
                 <p className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-                  Could not load starter habits: {templateLoadError}
+                  Could not load company goals: {templateLoadError}
                 </p>
               ) : null}
               {templates.length === 0 && !templateLoadError ? (
                 <div className="rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-3 text-sm text-foreground">
                   <p className="font-medium text-amber-950 dark:text-amber-100">
-                    No template habits in your database yet
+                    No company goals in your database yet
                   </p>
                   <p className="mt-2 text-muted-foreground">
-                    Run the SQL migration{" "}
-                    <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                      supabase/migrations/0005_seed_template_goals_if_missing.sql
-                    </code>{" "}
-                    in the Supabase SQL Editor (or{" "}
-                    <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                      supabase db push
-                    </code>
-                    ). That inserts the three starter rows with{" "}
-                    <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                      is_template = true
-                    </code>
-                    . You can still continue — add habits later from Habits.
+                    Your company has not published any goals yet. Ask your company
+                    admin to create public goals in Settings or from the Habits page.
+                    You can still continue now and join later.
                   </p>
                 </div>
               ) : null}
               {templates.length > 0 ? (
                 <p className="text-xs text-muted-foreground">
-                  Uncheck any you do not want cloned into your tracker yet.
+                  Uncheck goals you do not want to join right now.
                 </p>
               ) : null}
               <ul className="space-y-3">
@@ -165,8 +155,8 @@ export function OnboardingForm({
               {pending
                 ? "Saving…"
                 : templates.length > 0
-                  ? "Start tracking"
-                  : "Continue without starters"}
+                  ? "Join selected goals"
+                  : "Continue without joining"}
             </Button>
           </form>
         </CardContent>

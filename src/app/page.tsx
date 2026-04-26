@@ -39,11 +39,11 @@ export default async function HomePage() {
         <div className="container mx-auto max-w-3xl text-center">
           <p className="text-sm font-medium text-primary">Healthy Together</p>
           <h1 className="mt-3 text-balance text-4xl font-semibold tracking-tight md:text-5xl">
-            Track health goals with the people who keep you honest.
+            Company goals that teams commit to together.
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-pretty text-muted-foreground md:text-lg">
-            Simple daily and weekly health habits — check in from one screen, see streaks
-            and weekly progress, and stay accountable with friends and small groups.
+            Join shared workplace goals, check in daily, and see company leaderboards in
+            real time. Everyone in the company can join and progress together.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link href="/register" className={cn(buttonVariants({ size: "lg" }))}>
@@ -61,36 +61,37 @@ export default async function HomePage() {
 
       <section className="container mx-auto max-w-3xl px-4 py-16">
         <h2 className="text-center text-lg font-semibold tracking-tight">
-          Starter habits you can turn on
+          How company goals work
         </h2>
         <p className="mx-auto mt-2 max-w-lg text-center text-sm text-muted-foreground">
-          Enable them during signup or any time from Habits — each one becomes a personal
-          tracker you check in on daily or weekly.
+          Create goals as public for the company or private for yourself. Colleagues join
+          public goals and appear on the same leaderboard.
         </p>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           <Card className="border-border/80">
             <CardHeader>
-              <CardTitle className="text-base">Core & mobility</CardTitle>
+              <CardTitle className="text-base">Join company goals</CardTitle>
               <CardDescription>
-                Daily yes/no when you finish core or mobility work — streaks keep motivation
-                high.
+                Browse shared goals and join in one tap. No friend requests needed —
+                everyone in the company can participate.
               </CardDescription>
             </CardHeader>
           </Card>
           <Card className="border-border/80">
             <CardHeader>
-              <CardTitle className="text-base">Strength sessions</CardTitle>
+              <CardTitle className="text-base">Check in daily</CardTitle>
               <CardDescription>
-                Weekly count for studio or home strength sessions with a clear Mon–Sun
-                target.
+                Log progress with simple daily/weekly check-ins. Habits support done/not
+                done, daily counts, and weekly counts.
               </CardDescription>
             </CardHeader>
           </Card>
           <Card className="border-border/80">
             <CardHeader>
-              <CardTitle className="text-base">Runs this week</CardTitle>
+              <CardTitle className="text-base">See company leaderboard</CardTitle>
               <CardDescription>
-                Log each run through Sunday — great for solo training or a running crew.
+                Each goal has a shared leaderboard across all participants, making progress
+                visible and motivating.
               </CardDescription>
             </CardHeader>
           </Card>

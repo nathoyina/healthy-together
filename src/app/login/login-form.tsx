@@ -20,7 +20,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { toastAuthError } from "@/lib/auth/auth-toast";
+import { toastAuthError, toastAuthUnexpected } from "@/lib/auth/auth-toast";
 
 export function LoginForm() {
   const [username, setUsername] = useState("");
@@ -40,19 +40,22 @@ export function LoginForm() {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: usernameToLoginEmail(u),
-      password,
-    });
-    setLoading(false);
-
-    if (error) {
-      toastAuthError(error);
-      return;
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: usernameToLoginEmail(u),
+        password,
+      });
+      if (error) {
+        toastAuthError(error);
+        return;
+      }
+      router.push("/dashboard");
+      router.refresh();
+    } catch (error) {
+      toastAuthUnexpected(error);
+    } finally {
+      setLoading(false);
     }
-
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (

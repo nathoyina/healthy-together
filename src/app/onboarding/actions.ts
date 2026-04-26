@@ -67,22 +67,16 @@ export async function completeOnboarding(
   for (const tid of selectedTemplates) {
     const { data: template } = await supabase
       .from("goals")
-      .select("*")
+      .select("id")
       .eq("id", tid)
-      .eq("is_template", true)
+      .or("is_template.eq.true,is_public.eq.true")
       .maybeSingle();
 
     if (!template) continue;
 
-    const { error: insertErr } = await supabase.from("goals").insert({
-      owner_id: user.id,
-      title: template.title,
-      description: template.description,
-      type: template.type,
-      target_per_period: template.target_per_period,
-      icon: template.icon,
-      color: template.color,
-      is_template: false,
+    const { error: insertErr } = await supabase.from("goal_participants").insert({
+      goal_id: template.id,
+      user_id: user.id,
     });
 
     if (insertErr) {
