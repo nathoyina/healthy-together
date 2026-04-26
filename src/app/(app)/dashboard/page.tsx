@@ -108,7 +108,7 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle>No habits to track yet</CardTitle>
             <CardDescription>
-              Add a starter habit from templates or define your own — then your check-ins
+              Join a company goal or define your own — then your check-ins
               and streaks show up here.
             </CardDescription>
           </CardHeader>
@@ -120,7 +120,7 @@ export default async function DashboardPage() {
               href="/goals"
               className={cn(buttonVariants({ variant: "outline" }))}
             >
-              Browse templates
+              Browse company goals
             </Link>
           </CardContent>
         </Card>

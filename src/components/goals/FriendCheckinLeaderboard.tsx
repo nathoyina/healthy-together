@@ -20,31 +20,35 @@ function rankStyle(rank: number) {
 export function FriendCheckinLeaderboard({
   rows,
   id,
-  friendCount,
+  participantCount,
 }: {
   rows: FriendLeaderRow[];
   id?: string;
-  /** Accepted friends (not including you); for empty-state copy */
-  friendCount: number;
+  /** Participants on this goal (including you). */
+  participantCount: number;
 }) {
   return (
     <Card id={id} className="scroll-mt-24 border-border/80 shadow-sm">
       <CardHeader>
-        <CardTitle className="text-lg">Friend leaderboard</CardTitle>
+        <CardTitle className="text-lg">Company leaderboard</CardTitle>
         <CardDescription>
-          Ranking by total check-ins on this habit (sum of every log). Only you and
-          accepted friends who can see this habit are listed — invite friends to join
-          as participants so their counts show up here.
+          Ranking by total check-ins on this habit (sum of every log). Everyone who
+          joins this goal is listed.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {friendCount === 0 ? (
+        {participantCount <= 1 ? (
           <p className="rounded-md border border-dashed border-border/80 bg-muted/30 p-3 text-sm text-muted-foreground">
-            Add friends from{" "}
-            <Link href="/friends" className="font-medium text-primary underline">
-              Friends
+            Invite colleagues to join this goal from{" "}
+            <Link href="/goals" className="font-medium text-primary underline">
+              Habits
             </Link>{" "}
-            to see how your check-ins compare. Until then, only your own total appears.
+            to see a richer leaderboard. For now, you are the only participant.
+          </p>
+        ) : null}
+        {rows.length > 0 && rows.every((r) => r.checkIns === 0) ? (
+          <p className="rounded-md border border-dashed border-border/80 bg-muted/30 p-3 text-sm text-muted-foreground">
+            Participants are joined, but no one has checked in yet.
           </p>
         ) : null}
         <ul className="space-y-2">

@@ -20,10 +20,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { toastAuthError } from "@/lib/auth/auth-toast";
+import { toastAuthError, toastAuthUnexpected } from "@/lib/auth/auth-toast";
 
 export function RegisterForm() {
   const [username, setUsername] = useState("");
+  const [companyCode, setCompanyCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,6 +34,7 @@ export function RegisterForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const u = normalizeUsername(username);
+    const code = companyCode.trim().toUpperCase();
     if (!isValidUsernameShape(u)) {
       toast.error(
         "Username must be 3–20 characters: lowercase letters, numbers, underscores.",
@@ -47,35 +49,58 @@ export function RegisterForm() {
       toast.error("Passwords do not match.");
       return;
     }
+    if (!code) {
+      toast.error("Company code is required.");
+      return;
+    }
 
     setLoading(true);
     const email = usernameToLoginEmail(u);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          username: u,
+    try {
+      const { data: companyExists, error: codeError } = await supabase.rpc(
+        "company_code_exists",
+        { p_code: code },
+      );
+      if (codeError) {
+        toast.error(codeError.message);
+        return;
+      }
+      if (!companyExists) {
+        toast.error("Invalid company code.");
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username: u,
+            company_code: code,
+          },
         },
-      },
-    });
-    setLoading(false);
+      });
 
-    if (error) {
-      toastAuthError(error);
-      return;
+      if (error) {
+        toastAuthError(error);
+        return;
+      }
+
+      if (data.session) {
+        router.push("/onboarding");
+        router.refresh();
+        return;
+      }
+
+      toast("Check your email", {
+        description:
+          "Email confirmation is on in Supabase. Disable it under Auth → Email for instant sign-up in development.",
+      });
+    } catch (error) {
+      toastAuthUnexpected(error);
+    } finally {
+      setLoading(false);
     }
-
-    if (data.session) {
-      router.push("/onboarding");
-      router.refresh();
-      return;
-    }
-
-    toast("Check your email", {
-      description:
-        "Email confirmation is on in Supabase. Disable it under Auth → Email for instant sign-up in development.",
-    });
   }
 
   return (
@@ -85,8 +110,8 @@ export function RegisterForm() {
           Create account
         </CardTitle>
         <CardDescription>
-          Username and password. No separate email field — we use a private login
-          address behind the scenes.
+          Username, company code, and password. No separate email field — we use a
+          private login address behind the scenes.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -104,6 +129,21 @@ export function RegisterForm() {
               pattern="[a-z0-9_]{3,20}"
               title="3–20 characters: letters, numbers, underscores"
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="company_code">Company code</Label>
+            <Input
+              id="company_code"
+              name="company_code"
+              required
+              value={companyCode}
+              onChange={(e) => setCompanyCode(e.target.value)}
+              placeholder="ACME2026"
+              autoCapitalize="characters"
+            />
+            <p className="text-xs text-muted-foreground">
+              Ask your company admin for the join code.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>

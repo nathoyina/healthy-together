@@ -8,6 +8,10 @@ Healthy Together helps you **track recurring habits** (daily yes/no, weekly coun
 
 You sign in with a **username and password** (implemented via Supabase email under the hood). Onboarding can clone **starter template habits**; the dashboard is your daily **check-in** surface. Each habit has a **friend leaderboard** ranked by total check-ins on that habit.
 
+### Why Habits First (Not Raw Totals)
+
+This app prioritizes **habit goals** (done today, count today, count this week) over cumulative totals (e.g. “50,000 total steps”) because habit loops drive repeat behavior. Habit-based tracking is also fairer across different starting fitness levels and does not require everyone to connect wearable integrations before they can participate. In short: it optimizes for consistency and team participation, not only volume.
+
 
 ## Installation
 

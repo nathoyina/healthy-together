@@ -25,13 +25,16 @@ export async function AppNav() {
     : { data: null };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
       <div className="container flex h-14 max-w-3xl items-center justify-between gap-4 px-4 md:max-w-4xl">
         <Link
           href="/dashboard"
-          className="text-sm font-semibold tracking-tight text-foreground hover:opacity-90"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold tracking-tight text-foreground hover:opacity-90"
         >
-          Healthy Together
+          <span aria-hidden>🌈</span>
+          <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-cyan-500 bg-clip-text text-transparent">
+            Healthy Together
+          </span>
         </Link>
         <nav className="hidden items-center gap-1 sm:flex">
           {links.map((l) => (

@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { cloneTemplateGoal } from "./actions";
+import { joinCompanyGoal } from "./actions";
 
 export function CloneTemplateButton({ templateId }: { templateId: string }) {
   const [pending, start] = useTransition();
@@ -16,14 +16,14 @@ export function CloneTemplateButton({ templateId }: { templateId: string }) {
       disabled={pending}
       onClick={() =>
         start(async () => {
-          const res = await cloneTemplateGoal(templateId);
+          const res = await joinCompanyGoal(templateId);
           if (res?.error) {
             toast.error(res.error);
           }
         })
       }
     >
-      Add to my habits
+      Join goal
     </Button>
   );
 }

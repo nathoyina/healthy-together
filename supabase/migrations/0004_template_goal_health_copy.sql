@@ -6,7 +6,8 @@ set
   description =
     'Daily check-in when you finish core, mobility, or planned rehab work — builds a streak.',
   icon = 'flame',
-  color = 'orange'
+  color = 'orange',
+  is_public = true
 where
   is_template = true
   and title = 'Ab Challenge';
@@ -17,7 +18,8 @@ set
   description =
     'Log each strength, Pilates, or studio workout; week resets Monday.',
   icon = 'dumbbell',
-  color = 'teal'
+  color = 'teal',
+  is_public = true
 where
   is_template = true
   and title = 'BFT Sessions';
@@ -28,7 +30,8 @@ set
   description =
     'Count each run Mon–Sun — easy to share with a running group or coach.',
   icon = 'footprints',
-  color = 'sky'
+  color = 'sky',
+  is_public = true
 where
   is_template = true
   and title = 'Run Count';

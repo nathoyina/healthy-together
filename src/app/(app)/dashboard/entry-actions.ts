@@ -39,7 +39,6 @@ export async function setDailyBinaryDone(
   }
 
   revalidatePath("/dashboard");
-  revalidatePath("/goals");
   revalidatePath(`/goals/${goalId}`);
 }
 
@@ -70,7 +69,6 @@ export async function setCountForDate(
   }
 
   revalidatePath("/dashboard");
-  revalidatePath("/goals");
   revalidatePath(`/goals/${goalId}`);
 }
 

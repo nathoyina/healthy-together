@@ -22,7 +22,7 @@ export default async function OnboardingPage() {
   const { data: templates, error: templatesError } = await supabase
     .from("goals")
     .select("id, title, description, type, target_per_period, icon, color")
-    .eq("is_template", true)
+    .or("is_template.eq.true,is_public.eq.true")
     .order("title");
 
   return (

@@ -18,6 +18,29 @@ import { Badge } from "@/components/ui/badge";
 import { ArchiveGoalButton } from "./archive-goal-button";
 import { CloneTemplateButton } from "./clone-template-button";
 
+type JoinedGoal = {
+  id: string;
+  title: string;
+  type: GoalType;
+  target_per_period: number | null;
+  archived_at: string | null;
+  owner_id: string | null;
+  is_template: boolean;
+  is_public: boolean;
+};
+
+type CompanyGoal = {
+  id: string;
+  title: string;
+  description: string | null;
+  type: GoalType;
+  target_per_period: number | null;
+  icon: string | null;
+  owner_id: string | null;
+  is_template?: boolean;
+  is_public?: boolean;
+};
+
 export default async function GoalsPage() {
   const supabase = await createClient();
   const {
@@ -31,14 +54,45 @@ export default async function GoalsPage() {
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
+  const { data: joinedParts } = await supabase
+    .from("goal_participants")
+    .select(
+      "goal_id, goals(id, title, type, target_per_period, archived_at, owner_id, is_template, is_public)",
+    )
+    .eq("user_id", user.id);
+
   const { data: templates, error: templatesError } = await supabase
     .from("goals")
-    .select("id, title, description, type, target_per_period, icon")
+    .select("id, title, description, type, target_per_period, icon, owner_id, is_template, is_public")
     .eq("is_template", true)
     .order("title");
 
+  const { data: publicGoals, error: publicGoalsError } = await supabase
+    .from("goals")
+    .select("id, title, description, type, target_per_period, icon, owner_id, is_template, is_public")
+    .eq("is_public", true)
+    .order("created_at", { ascending: false });
+
   const active = (mine ?? []).filter((g) => !g.archived_at);
   const archived = (mine ?? []).filter((g) => g.archived_at);
+  const joined = (joinedParts ?? [])
+    .map((p) => {
+      const g = p.goals as JoinedGoal | null | JoinedGoal[];
+      if (!g) return null;
+      return Array.isArray(g) ? g[0] : g;
+    })
+    .filter((g): g is JoinedGoal => !!g && !g.archived_at && g.owner_id !== user.id);
+  const joinedGoalIds = new Set(joined.map((g) => g.id));
+  const companyGoalsById = new Map<string, CompanyGoal>();
+  for (const goal of [...(templates ?? []), ...(publicGoals ?? [])]) {
+    if (!goal) continue;
+    companyGoalsById.set(goal.id, goal as CompanyGoal);
+  }
+  const companyGoals = [...companyGoalsById.values()].filter(
+    (g) => g.owner_id !== user.id && !joinedGoalIds.has(g.id),
+  );
+  const companyGoalsError =
+    templatesError?.message ?? publicGoalsError?.message ?? null;
 
   return (
     <div className="space-y-10">
@@ -46,7 +100,7 @@ export default async function GoalsPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Your habits</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Track workouts, recovery, and routines — clone a starter or build your own.
+            Create private or public habits, and join company goals with colleagues.
           </p>
         </div>
         <Link href="/goals/new" className={cn(buttonVariants())}>
@@ -58,7 +112,7 @@ export default async function GoalsPage() {
         <h2 className="text-sm font-medium text-muted-foreground">Active</h2>
         {active.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Nothing active yet. Add a habit from templates below or create a custom tracker.
+            Nothing active yet. Join a company goal below or create your own private habit.
           </p>
         ) : (
           <ul className="space-y-2">
@@ -99,56 +153,97 @@ export default async function GoalsPage() {
         )}
       </section>
 
+      {joined.length > 0 ? (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium text-muted-foreground">Joined company goals</h2>
+          <ul className="space-y-2">
+            {joined.map((g) => (
+              <li key={g.id}>
+                <Card className="border-border/80">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div>
+                      <CardTitle className="text-base">
+                        <Link href={`/goals/${g.id}#friend-leaderboard`} className="hover:underline">
+                          {g.title}
+                        </Link>
+                      </CardTitle>
+                      <CardDescription>
+                        {goalTrackingCadenceShort(g.type as GoalType, g.target_per_period)}
+                      </CardDescription>
+                    </div>
+                    <Link
+                      href={`/goals/${g.id}#friend-leaderboard`}
+                      className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                    >
+                      Open
+                    </Link>
+                  </CardHeader>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-muted-foreground">
-          Starter habits (templates)
+          Company goals
         </h2>
         <p className="text-xs text-muted-foreground">
-          Curated examples — one tap adds a copy to your active habits.
+          Shared goals for the workplace. Join once, then your check-ins contribute to team momentum.
         </p>
-        {templatesError ? (
+        {companyGoalsError ? (
           <p className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-            Could not load templates: {templatesError.message}
+            Could not load company goals: {companyGoalsError}
           </p>
         ) : null}
-        {(templates ?? []).length === 0 && !templatesError ? (
+        {companyGoals.length === 0 && !companyGoalsError ? (
           <Card className="border-amber-500/40 bg-amber-500/5">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">No template rows found</CardTitle>
+              <CardTitle className="text-base">No joinable company goals right now</CardTitle>
               <CardDescription className="text-foreground/80">
-                Your project is missing the seeded goals with{" "}
-                <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                  is_template = true
-                </code>
-                . In the Supabase SQL Editor, run{" "}
-                <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                  supabase/migrations/0005_seed_template_goals_if_missing.sql
-                </code>{" "}
-                (or apply migrations with the Supabase CLI), then refresh this page.
+                You may have already joined every available company goal. Ask a colleague to
+                create a public goal.
               </CardDescription>
             </CardHeader>
           </Card>
         ) : null}
         <ul className="grid gap-3 sm:grid-cols-2">
-          {(templates ?? []).map((t) => {
+          {companyGoals.map((t) => {
             const emoji = templateEmoji(t.icon);
             return (
             <li key={t.id}>
               <Card className="h-full border-border/80">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    {emoji ? <span aria-hidden>{emoji}</span> : null}
-                    {t.title}
-                  </CardTitle>
-                  {t.description ? (
-                    <CardDescription>{t.description}</CardDescription>
-                  ) : null}
+                <CardHeader className="space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <CardTitle className="text-base">
+                      <Link href={`/goals/${t.id}`} className="inline-flex items-center gap-2 hover:underline">
+                        {emoji ? <span aria-hidden>{emoji}</span> : null}
+                        {t.title}
+                      </Link>
+                    </CardTitle>
+                    <Link
+                      href={`/goals/${t.id}`}
+                      className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                    >
+                      View
+                    </Link>
+                  </div>
+                  {t.description ? <CardDescription>{t.description}</CardDescription> : null}
                   <p className="text-xs text-muted-foreground">
                     {goalTrackingCadenceShort(t.type as GoalType, t.target_per_period)}
                   </p>
                 </CardHeader>
                 <CardContent>
-                  <CloneTemplateButton templateId={t.id} />
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      href={`/goals/${t.id}`}
+                      className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                    >
+                      Open goal
+                    </Link>
+                    <CloneTemplateButton templateId={t.id} />
+                  </div>
                 </CardContent>
               </Card>
             </li>

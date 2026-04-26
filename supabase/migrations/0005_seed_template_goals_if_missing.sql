@@ -15,7 +15,8 @@ begin
     target_per_period,
     icon,
     color,
-    is_template
+    is_template,
+    is_public
   )
   values
     (
@@ -26,6 +27,7 @@ begin
       null,
       'flame',
       'orange',
+      true,
       true
     ),
     (
@@ -36,6 +38,7 @@ begin
       3,
       'dumbbell',
       'teal',
+      true,
       true
     ),
     (
@@ -46,6 +49,7 @@ begin
       3,
       'footprints',
       'sky',
+      true,
       true
     );
 end;

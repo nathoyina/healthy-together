@@ -8,19 +8,14 @@ export type FriendLeaderInput = {
 
 export type FriendLeaderRow = FriendLeaderInput & { rank: number };
 
-/**
- * Ranks you, accepted friends, and the habit owner by total check-ins on this goal
- * (sum of `goal_entries.value`). Competition ranking for ties (1, 1, 3).
- */
+/** Ranks all goal participants by total check-ins. Competition ranking for ties (1,1,3). */
 export function buildFriendLeaderboardRows(
   viewerId: string,
-  ownerId: string | null,
-  friendIds: string[],
+  participantIds: string[],
   entries: { user_id: string; value: number }[],
   profiles: Map<string, { username: string | null; display_name: string | null }>,
 ): FriendLeaderRow[] {
-  const ids = new Set<string>([viewerId, ...friendIds]);
-  if (ownerId) ids.add(ownerId);
+  const ids = new Set<string>([viewerId, ...participantIds]);
 
   const totals = new Map<string, number>();
   for (const uid of ids) totals.set(uid, 0);
@@ -56,5 +51,5 @@ export function buildFriendLeaderboardRows(
 export function displayNameForLeader(r: FriendLeaderInput): string {
   if (r.username) return `@${r.username}`;
   if (r.displayName) return r.displayName;
-  return r.isYou ? "You" : "Friend";
+  return r.isYou ? "You" : "Colleague";
 }

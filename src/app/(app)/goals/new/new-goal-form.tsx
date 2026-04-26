@@ -57,6 +57,22 @@ export function NewGoalForm() {
             </select>
           </div>
           <div className="space-y-2">
+            <Label htmlFor="visibility">Visibility</Label>
+            <select
+              id="visibility"
+              name="visibility"
+              required
+              defaultValue="private"
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            >
+              <option value="private">Private goal (only invited friends/groups)</option>
+              <option value="public">Public company goal (colleagues can join)</option>
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Public goals appear in the company list and anyone signed in can join.
+            </p>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="target_per_period">Target (weekly / daily count)</Label>
             <Input
               id="target_per_period"
@@ -72,7 +88,7 @@ export function NewGoalForm() {
           </div>
           <div className="flex flex-wrap gap-2 pt-2">
             <Button type="submit" disabled={pending}>
-              {pending ? "Creating…" : "Create goal"}
+              {pending ? "Creating…" : "Create habit"}
             </Button>
             <Link href="/goals" className={cn(buttonVariants({ variant: "outline" }))}>
               Cancel
