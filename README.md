@@ -8,6 +8,10 @@ Healthy Together helps teams **track recurring habits** (daily yes/no, weekly co
 
 You sign in with a **username, company code, and password** (implemented via Supabase email under the hood). Onboarding lets users join company goals; the dashboard is the daily **check-in** surface. Each habit has a **company leaderboard** ranked by total check-ins from all participants on that goal.
 
+## Demo
+
+View public URL here: https://healthy-together-too.vercel.app
+
 ### Why Habits First (Not Raw Totals)
 
 This app prioritizes **habit goals** (done today, count today, count this week) over cumulative totals (e.g. “50,000 total steps”) because habit loops drive repeat behavior. Habit-based tracking is also fairer across different starting fitness levels and does not require everyone to connect wearable integrations before they can participate. In short: it optimizes for consistency and team participation, not only volume.
